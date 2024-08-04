@@ -1,0 +1,46 @@
+- name: using terraform to build servers
+  community.general.terraform:
+    project_path: terranetes/files/
+    force_init: true
+    state: present
+    variables:
+      worker_count: 2
+      master_count: 1
+  register: terraform_output
+
+- name: Add master nodes to Ansible inventory
+  add_host:
+    name: "{{ item }}"
+    groups: "masters"
+  loop: "{{ terraform_output.outputs.master_ips.value }}"
+
+- name: Add worker nodes to Ansible inventory
+  add_host:
+    name: "{{ item }}"
+    groups: "workers"
+  loop: "{{ terraform_output.outputs.worker_ips.value }}"
+
+- name: Gather master IPs
+  set_fact:
+    master_ips: "{{ terraform_output.outputs.master_ips.value }}"
+
+- name: Gather worker IPs
+  set_fact:
+    worker_ips: "{{ terraform_output.outputs.worker_ips.value }}"
+
+- name: Create inventory content
+  set_fact:
+    inventory_content: |
+      [masters]
+      {% for ip in master_ips %}
+      {{ ip }}
+      {% endfor %}
+
+      [workers]
+      {% for ip in worker_ips %}
+      {{ ip }}
+      {% endfor %}
+- name: Write inventory to file
+  copy:
+    content: "{{ inventory_content }}"
+    dest: terraform-hosts.ini

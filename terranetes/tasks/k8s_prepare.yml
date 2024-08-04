@@ -1,0 +1,166 @@
+- name: Ensure required kernel modules are loaded at boot
+  copy:
+    content: |
+      overlay
+      br_netfilter
+    dest: /etc/modules-load.d/k8s.conf
+
+- name: Load overlay module
+  command: modprobe overlay
+
+- name: Load br_netfilter module
+  command: modprobe br_netfilter
+
+- name: disable swap
+  command: swapoff -a
+
+- name: Stop and disable AppArmor
+  service:
+    name: apparmor
+    state: stopped
+    enabled: no
+
+- name: Ensure sysctl parameters are set
+  copy:
+    content: |
+      net.bridge.bridge-nf-call-iptables=1
+      net.bridge.bridge-nf-call-ip6tables=1
+      net.ipv4.ip_forward=1
+    dest: /etc/sysctl.d/99-k8s-cri.conf
+
+- name: Apply sysctl parameters
+  command: sysctl --system
+
+- name: Download and install containerd
+  get_url:
+    url: https://github.com/containerd/containerd/releases/download/v1.7.20/containerd-1.7.20-linux-amd64.tar.gz
+    dest: /tmp/containerd-1.7.20-linux-amd64.tar.gz
+
+- name: Extract containerd
+  unarchive:
+    src: /tmp/containerd-1.7.20-linux-amd64.tar.gz
+    dest: /usr/local
+    remote_src: yes
+
+- name: Download containerd service file
+  get_url:
+    url: https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
+    dest: /etc/systemd/system/containerd.service
+
+- name: Create containerd configuration directory
+  file:
+    path: /etc/containerd
+    state: directory
+
+- name: Generate default containerd config again (ensure CNI plugins)
+  shell: |
+    containerd config default > /etc/containerd/config.toml
+
+- name: Set SystemdCgroup to true in containerd config
+  replace:
+    path: /etc/containerd/config.toml
+    regexp: "SystemdCgroup = false"
+    replace: "SystemdCgroup = true"
+
+- name: change default sandbox image
+  replace:
+    path: /etc/containerd/config.toml
+    regexp: "registry.k8s.io/pause:3.8"
+    replace: "registry.k8s.io/pause:3.9"
+
+- name: Restart containerd
+  service:
+    daemon_reload: yes
+    name: containerd
+    state: restarted
+
+- name: Download and install runc
+  get_url:
+    url: https://github.com/opencontainers/runc/releases/download/v1.1.13/runc.amd64
+    dest: /usr/local/sbin/runc
+    mode: "0755"
+
+- name: Create CNI plugins directory
+  file:
+    path: /opt/cni/bin
+    state: directory
+
+- name: Download CNI plugins
+  get_url:
+    url: https://github.com/containernetworking/plugins/releases/download/v1.5.1/cni-plugins-linux-amd64-v1.5.1.tgz
+    dest: /tmp/cni-plugins-linux-amd64-v1.5.1.tgz
+
+- name: Extract CNI plugins
+  unarchive:
+    src: /tmp/cni-plugins-linux-amd64-v1.5.1.tgz
+    dest: /opt/cni/bin
+    remote_src: yes
+
+- name: Install dependencies for Kubernetes tools
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+    update_cache: yes
+
+- name: Add Kubernetes apt key
+  shell: |
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Add Kubernetes apt repository
+  tags:
+    - apt
+  copy:
+    content: |
+      deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /
+    dest: /etc/apt/sources.list.d/kubernetes.list
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install Kubernetes tools
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+
+- name: Hold Kubernetes tools at current version
+  command: apt-mark hold kubelet kubeadm kubectl
+  tags:
+    - n
+
+- name: Debug Check runc installation
+  command: ls /usr/local/sbin/runc
+  register: runc_check
+
+- name: Debug  Print runc installation status
+  debug:
+    msg: "{{ runc_check.stdout_lines }}"
+
+- name: Debug  Check CNI plugins installation
+  command: ls /opt/cni/bin
+  register: cni_check
+
+- name: Debug Print CNI plugins installation status
+  debug:
+    msg: "{{ cni_check.stdout_lines }}"
+
+- name: Debug Check containerd installation
+  command: which containerd
+  register: containerd_check
+
+- name: Debug  Print containerd installation status
+  debug:
+    msg: "{{ containerd_check.stdout_lines }}"
+
+- name: Debug  Show installed Kubernetes packages
+  command: apt show kubelet kubeadm kubectl
+  register: k8s_check
+
+- name: Debug  Print Kubernetes packages installation status
+  debug:
+    msg: "{{ k8s_check.stdout_lines }}"

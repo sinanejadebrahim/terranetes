@@ -1,0 +1,35 @@
+- setup:
+
+# 10.0 is used here because we used the same range in terraform - change with that in mind
+- name: set Internal IP
+  set_fact:
+    internal_ip: "{{ (ansible_all_ipv4_addresses | select('search', '10\\.0') | list).0 }}"
+
+- name: print init command
+  debug:
+    msg: "kubeadm init --control-plane-endpoint={{ internal_ip }} --apiserver-advertise-address={{ internal_ip }} --pod-network-cidr=192.168.0.0/16 --cri-socket=unix:///run/containerd/containerd.sock"
+
+- name: Confirm Initialization
+  pause:
+    prompt: "\nthis will use kubeadm init to init the cluster, do you want to continue? (y/n)"
+  register: init_confirmation
+
+- name: run init command
+  command: "kubeadm init --control-plane-endpoint={{ internal_ip }} --apiserver-advertise-address={{ internal_ip }} --pod-network-cidr=192.168.0.0/16 --cri-socket=unix:///run/containerd/containerd.sock"
+  register: init_output
+  when: init_confirmation.user_input == 'y'
+  run_once: true
+
+- debug:
+    msg: "{{ init_output.stdout_lines }}"
+
+- name: get join command with print token
+  command: "kubeadm token create --print-join-command"
+  register: join_command
+
+- name: Set the join command for workers
+  delegate_to: "{{ item }}"
+  set_fact:
+    worker_join_command: "{{ join_command.stdout }}"
+  with_items: "{{ groups['workers'] }}"
+  run_once: true

@@ -1,0 +1,17 @@
+---
+- include_tasks: terraform_deploy.yml
+  when: inventory_hostname == 'localhost'
+
+- meta: refresh_inventory
+
+- include_tasks: k8s_prepare.yml
+  when: inventory_hostname != 'localhost'
+
+- include_tasks: k8s_deploy.yml
+  when: "'masters' in group_names"
+
+- include_tasks: k8s_add_worker_node.yml
+  when: "'workers' in group_names"
+
+- include_tasks: calico_metrics.yml
+  when: "'masters' in group_names"

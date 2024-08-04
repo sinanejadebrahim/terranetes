@@ -1,0 +1,11 @@
+- name: run terraform tasks
+  hosts: localhost
+  become: true
+  roles:
+    - terranetes/
+
+- name: run kuber tasks
+  hosts: all
+  become: true
+  roles:
+    - terranetes/

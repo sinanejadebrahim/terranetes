@@ -1,0 +1,31 @@
+- name: Confirm Initialization
+  pause:
+    prompt: "\nnext step is to apply calico and metrics server, do you want to continue? (y/n)"
+  register: init_confirmation
+
+- name: apply calico
+  when: init_confirmation.user_input == 'y'
+  run_once: true
+  command:
+    cmd: "kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico.yaml"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+
+- name: clone metrics server repo
+  ansible.builtin.git:
+    repo: "https://github.com/kubernetes-sigs/metrics-server"
+    dest: /tmp/metrics-server
+    version: master
+
+- name: Ensure the --kubelet-insecure-tls argument is added to the deployment.yaml
+  ansible.builtin.lineinfile:
+    path: /tmp/metrics-server/manifests/base/deployment.yaml
+    insertafter: "          - --metric-resolution=15s"
+    line: "          - --kubelet-insecure-tls"
+    state: present
+
+- name: Apply the Kubernetes manifests
+  command:
+    cmd: kubectl apply -k /tmp/metrics-server/manifests/base/
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
