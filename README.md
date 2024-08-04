@@ -2,6 +2,7 @@
 
 Welcome to **Terranetes**, the easy and straightforward way to set up your Kubernetes cluster using Ansible and Terraform! No need for complex tools like KubeSpray or Kops—Terranetes is here to streamline the process with just a few Ansible tasks. 🚀
 
+<a href="https://asciinema.org/a/670720" target="_blank" ><img src="https://asciinema.org/a/670720.svg" height="500px"/></a>
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
 2. [Getting Started](#getting-started)
