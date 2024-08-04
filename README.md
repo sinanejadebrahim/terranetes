@@ -81,3 +81,8 @@ For any issues or contributions, feel free to open an issue or submit a pull req
 ### a few notes: 
 1. I already know this could look much better with variables,templates,  etc... contributions are appreciated
 2. no shade to Kops or kubeSpray people, you're awesome , i'm just too lazy to check out all those files and that's why i made this.
+
+
+
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/sinanejadebrahim/terranetes.svg?variant=light)](https://starchart.cc/sinanejadebrahim/terranetes)
