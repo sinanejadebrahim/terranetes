@@ -2,7 +2,16 @@
 
 Welcome to **Terranetes**, the easy and straightforward way to set up your Kubernetes cluster using Ansible and Terraform! No need for complex tools like KubeSpray or Kops—Terranetes is here to streamline the process with just a few Ansible tasks. 🚀
 
-<a href="https://asciinema.org/a/670720" target="_blank" ><img src="https://asciinema.org/a/670720.svg" height="500px"/></a>
+### Everything is Logical and based on a vars file - each variable runs a set of tasks (can be used alone or mixed):
+   for example:
+   
+      1. you can use prepare and init master
+      2. you can just use prepare and add worker 
+      3. Just Calico and metrics server
+      4. join some worker node on the other side of the planet to your cluster that you built without terranetes 
+      5. maybe you just want to create with terraform - can do that too
+      6. sky is the limit (I've tried to break the flow or a cluster with multiple test, haven't been successful yet)
+##### Also kubelet is always checked to keep your clusters safe in case of wrong values in vars
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
 2. [Getting Started](#getting-started)
@@ -26,7 +35,6 @@ Before you begin, ensure you have the following:
    git clone git@github.com:sinanejadebrahim/terranetes.git
    cd terranetes
    # update the provider.tf file in terranetes/files/ with your token
-   # also check the variables.tf file and change based on your needs
    ```
 
 2. **Install the required Ansible Galaxy collection**:
@@ -34,6 +42,11 @@ Before you begin, ensure you have the following:
    ansible-galaxy collection install community.general
    ```
 
+3. **change vars.yml file**:
+   ```sh
+   everyhing is based on this file
+   ```
+   
 ## Running the Playbook ▶️
 
 To set up your Kubernetes cluster, simply run the following command:
@@ -52,13 +65,13 @@ No inventory file is needed! Terranetes dynamically updates the inventory with h
    - Installs all necessary prerequisites on your servers for Kubernetes.
 
 3. **Kubernetes Master Initialization**:
-   - Prompts you to initialize the master node.
+   - can initialize the master node.
 
 4. **Worker Nodes Addition**:
-   - Asks if you want to add worker nodes to your cluster and does so upon confirmation.
+   - can add worker nodes to your cluster .
 
 5. **Apply Calico and Metrics Server**:
-   - Prompts to apply Calico and the Metrics Server to your cluster.
+   - can apply Calico and the Metrics Server to your cluster.
 
 ## Verifying the Setup ✅
 
@@ -86,3 +99,4 @@ For any issues or contributions, feel free to open an issue or submit a pull req
 
 ## Stargazers over time
 [![Stargazers over time](https://starchart.cc/sinanejadebrahim/terranetes.svg?variant=light)](https://starchart.cc/sinanejadebrahim/terranetes)
+
