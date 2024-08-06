@@ -1,0 +1,49 @@
+- debug:
+    msg:
+      - "install some extra tools (check below list)"
+      - "helm":
+          - "prometheus"
+          - "grafana"
+
+- name: Add Helm GPG key
+  shell: |
+    curl https://baltocdn.com/helm/signing.asc | gpg --dearmor -o /usr/share/keyrings/helm.gpg
+  args:
+    creates: /usr/share/keyrings/helm.gpg
+
+- name: Install apt-transport-https
+  ansible.builtin.apt:
+    name: apt-transport-https
+    state: present
+
+- name: Add Helm repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/helm-stable-debian.list
+    content: "deb [arch={{ ansible_architecture }} signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main"
+
+- name: install helm
+  apt:
+    update_cache: yes
+    name: helm
+    state: present
+
+# ansible helm module has alot of dependencies - so we're jsut using shell here
+- name: pull charts to /opt and install
+  shell: |
+    export KUBECONFIG=/etc/kubernetes/admin.conf 
+    kubectl create ns monitoring 
+    cd /opt 
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo add grafana https://grafana.github.io/helm-charts
+    helm repo update 
+    helm pull prometheus-community/prometheus --untar
+    helm pull grafana/grafana --untar 
+    helm install -n monitoring prometheus ./prometheus
+    helm install -n monitoring grafana ./grafana
+
+- debug:
+    msg:
+      - "check this link for more prometheus charts"
+      - "https://github.com/prometheus-community/helm-charts/tree/main/charts"
+      - "check this link for more grafana charts"
+      - "https://github.com/grafana/helm-charts/tree/main/charts"

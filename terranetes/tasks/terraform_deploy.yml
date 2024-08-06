@@ -4,8 +4,16 @@
     force_init: true
     state: present
     variables:
-      worker_count: 2
-      master_count: 1
+      worker_count: "{{ worker_count }}"
+      server_type_worker: "{{ server_type_worker }}"
+
+      master_count: "{{ master_count }}"
+      server_type_master: "{{ server_type_master }}"
+
+      image: "{{ image }}"
+
+      ssh_keys: "{{ ssh_keys | to_json }}"
+
   register: terraform_output
 
 - name: Add master nodes to Ansible inventory

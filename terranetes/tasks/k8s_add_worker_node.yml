@@ -1,13 +1,7 @@
-- name: Confirm Adding worker node
-  pause:
-    prompt: "\ni can try to add your worker nodes to your cluster,you can always do this with the output from previous job,  do you want to continue? (y/n)"
-  register: init_confirmation
-  run_once: true
-
-- name: add worker node
+- name: Run kubeadm join command
   command: "{{ worker_join_command }}"
-  register: output
-  when: init_confirmation.user_input == 'y'
+  when: kubelet_service_status.stdout != "active"
+  register: join_result
 
 - debug:
-    msg: "{{ output.stdout_lines }}"
+    msg: "{{ join_result.stdout_lines }}"

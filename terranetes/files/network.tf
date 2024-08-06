@@ -1,6 +1,6 @@
 resource "hcloud_network" "k8s" {
-  name     = "k8s"
-  ip_range = "10.0.0.0/16"
+  name              = "k8s"
+  ip_range          = "10.0.0.0/16"
   delete_protection = true
 }
 

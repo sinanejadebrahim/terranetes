@@ -1,7 +1,7 @@
 resource "hcloud_server" "master" {
   count                    = var.master_count
   name                     = "master-${count.index + 1}"
-  server_type              = var.server_type
+  server_type              = var.server_type_master
   image                    = var.image
   ssh_keys                 = var.ssh_keys
   location                 = var.location
@@ -30,7 +30,7 @@ resource "hcloud_server" "master" {
 resource "hcloud_server" "worker" {
   count                    = var.worker_count
   name                     = "worker-${count.index + 1}"
-  server_type              = var.server_type
+  server_type              = var.server_type_worker
   image                    = var.image
   ssh_keys                 = var.ssh_keys
   location                 = var.location

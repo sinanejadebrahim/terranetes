@@ -1,17 +1,34 @@
 ---
-- include_tasks: terraform_deploy.yml
-  when: inventory_hostname == 'localhost'
+- name: terraform deploy tasks
+  include_tasks: terraform_deploy.yml
+  when: inventory_hostname == 'localhost' and build_servers
 
 - meta: refresh_inventory
 
-- include_tasks: k8s_prepare.yml
+- name: check kubelet status
+  include_tasks: check_kubelet.yml
   when: inventory_hostname != 'localhost'
 
-- include_tasks: k8s_deploy.yml
-  when: "'masters' in group_names"
+- name: preparing kubernetes
+  include_tasks: k8s_prepare.yml
+  when: inventory_hostname != 'localhost' and kubelet_service_status.stdout != "active" and prepare_kuber
 
-- include_tasks: k8s_add_worker_node.yml
-  when: "'workers' in group_names"
+- name: deploy kuebrnetes
+  include_tasks: k8s_deploy.yml
+  when: "'masters' in group_names and kubelet_service_status.stdout != 'active' and  init_master"
 
-- include_tasks: calico_metrics.yml
-  when: "'masters' in group_names"
+- name: get join command
+  include_tasks: get_join_command.yml
+  when: "'masters' in group_names and add_worker"
+
+- name: add worker node
+  include_tasks: k8s_add_worker_node.yml
+  when: "'workers' in group_names and kubelet_service_status.stdout != 'active'  and add_worker"
+
+- name: calico and metrics server
+  include_tasks: calico_metrics.yml
+  when: "'masters' in group_names and enable_calico_metrics"
+
+- name: extra tools
+  include_tasks: extras.yml
+  when: "'masters' in group_names and enable_monitoring_stack"

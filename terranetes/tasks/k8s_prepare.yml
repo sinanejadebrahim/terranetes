@@ -11,7 +11,7 @@
 - name: Load br_netfilter module
   command: modprobe br_netfilter
 
-- name: disable swap
+- name: disables wap
   command: swapoff -a
 
 - name: Stop and disable AppArmor
@@ -109,29 +109,21 @@
     curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
 - name: Add Kubernetes apt repository
-  tags:
-    - apt
   copy:
     content: |
       deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /
     dest: /etc/apt/sources.list.d/kubernetes.list
 
-- name: Update apt cache
-  apt:
-    update_cache: yes
-
 - name: Install Kubernetes tools
   apt:
+    update_cache: yes
     name:
       - kubelet
       - kubeadm
-      - kubectl
     state: present
 
 - name: Hold Kubernetes tools at current version
-  command: apt-mark hold kubelet kubeadm kubectl
-  tags:
-    - n
+  command: apt-mark hold kubelet kubeadm
 
 - name: Debug Check runc installation
   command: ls /usr/local/sbin/runc

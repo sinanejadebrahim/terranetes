@@ -1,0 +1,10 @@
+- name: get join command with print token
+  command: "kubeadm token create --print-join-command"
+  register: join_command
+
+- name: Set the join command for workers
+  delegate_to: "{{ item }}"
+  set_fact:
+    worker_join_command: "{{ join_command.stdout }}"
+  with_items: "{{ groups['workers'] }}"
+  run_once: true

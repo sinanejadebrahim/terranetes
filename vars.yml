@@ -1,0 +1,24 @@
+# Terraform
+build_servers: true
+# if this is false - you need to give ansible the inventory with the list of masters and workers
+
+image: "ubuntu-22.04"
+ssh_keys:
+  - key1
+  - key2
+
+worker_count: "2"
+server_type_worker: "cpx21"
+
+master_count: "1"
+server_type_master: "cpx21"
+
+location: "nbg1"
+
+# Kubernetes
+prepare_kuber: true
+init_master: true
+add_worker: true
+
+enable_calico_metrics: true
+enable_monitoring_stack: false

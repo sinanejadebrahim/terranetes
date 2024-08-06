@@ -1,0 +1,4 @@
+- name: Check for already active node
+  shell: systemctl is-active kubelet
+  register: kubelet_service_status
+  ignore_errors: true
